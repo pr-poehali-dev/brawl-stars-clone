@@ -1,0 +1,16 @@
+{
+  "tests": [
+    {
+      "name": "Action on nonexistent match",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "match_id": "00000000-0000-0000-0000-000000000000",
+        "player_id": "00000000-0000-0000-0000-000000000001",
+        "action": "attack"
+      },
+      "expectedStatus": 404,
+      "bodyMatcher": "partial"
+    }
+  ]
+}

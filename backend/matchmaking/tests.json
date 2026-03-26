@@ -1,0 +1,20 @@
+{
+  "tests": [
+    {
+      "name": "Join matchmaking queue",
+      "method": "POST",
+      "path": "/",
+      "body": {"player_name": "TestPlayer99", "character_id": 3},
+      "expectedStatus": 200,
+      "expectedBody": {"match_id": "string"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Get match status - invalid player",
+      "method": "GET",
+      "path": "/?player_id=00000000-0000-0000-0000-000000000000",
+      "expectedStatus": 404,
+      "bodyMatcher": "partial"
+    }
+  ]
+}

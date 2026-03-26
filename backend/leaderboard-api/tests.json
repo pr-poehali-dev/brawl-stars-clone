@@ -1,0 +1,12 @@
+{
+  "tests": [
+    {
+      "name": "Get leaderboard",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {"my_rank": null},
+      "bodyMatcher": "partial"
+    }
+  ]
+}

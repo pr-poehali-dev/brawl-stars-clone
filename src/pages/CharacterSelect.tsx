@@ -3,6 +3,7 @@ import Icon from "@/components/ui/icon";
 import ParticlesBg from "@/components/game/ParticlesBg";
 import TopBar from "@/components/game/TopBar";
 import { CHARACTERS } from "@/data/gameData";
+import { api } from "@/lib/api";
 
 interface CharacterSelectProps {
   onNavigate: (screen: string, data?: unknown) => void;
@@ -17,6 +18,9 @@ const StatBar = ({ value, max = 100, color }: { value: number; max?: number; col
 const CharacterSelect = ({ onNavigate }: CharacterSelectProps) => {
   const [selected, setSelected] = useState(CHARACTERS[0]);
   const [hoveredId, setHoveredId] = useState<number | null>(null);
+  const [playerName, setPlayerName] = useState(() => localStorage.getItem("brawlzone_name") || "");
+  const [searching, setSearching] = useState(false);
+  const [error, setError] = useState("");
 
   const rarityColors: Record<string, string> = {
     "Легендарный": "#fbbf24",
@@ -175,12 +179,53 @@ const CharacterSelect = ({ onNavigate }: CharacterSelectProps) => {
                 <span className="text-yellow-400 font-rajdhani font-bold">{selected.difficulty}</span>
               </div>
 
-              {/* Кнопка боя */}
+              {/* Имя игрока */}
+              <div className="mb-3">
+                <input
+                  type="text"
+                  placeholder="Ваш никнейм..."
+                  value={playerName}
+                  maxLength={20}
+                  onChange={e => { setPlayerName(e.target.value); localStorage.setItem("brawlzone_name", e.target.value); }}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm font-exo text-white placeholder:text-muted-foreground outline-none"
+                  style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)" }}
+                />
+                {error && <p className="text-red-400 text-xs mt-1 font-exo">{error}</p>}
+              </div>
+
+              {/* Кнопка онлайн-боя */}
               <button
-                className="btn-primary w-full py-3.5 rounded-xl text-sm font-orbitron font-bold tracking-widest"
+                className="btn-primary w-full py-3.5 rounded-xl text-sm font-orbitron font-bold tracking-widest disabled:opacity-60"
+                disabled={searching}
+                onClick={async () => {
+                  const name = playerName.trim() || "Боец";
+                  if (!name) { setError("Введи никнейм"); return; }
+                  setError("");
+                  setSearching(true);
+                  try {
+                    const res = await api.joinQueue(name, selected.id);
+                    onNavigate("online-battle", {
+                      matchId: res.match_id,
+                      playerId: res.player_id,
+                      playerNumber: res.player_number,
+                      character: selected,
+                      playerName: name,
+                    });
+                  } catch {
+                    setError("Ошибка сети, попробуй снова");
+                  } finally {
+                    setSearching(false);
+                  }
+                }}
+              >
+                {searching ? "⏳ Поиск..." : "🌐 ОНЛАЙН БОЙ"}
+              </button>
+
+              <button
+                className="btn-secondary w-full py-3 rounded-xl text-xs mt-2"
                 onClick={() => onNavigate("battle", { character: selected })}
               >
-                ⚔️ В БОЙ!
+                🤖 БОЙ С БОТОМ
               </button>
               <button
                 className="btn-secondary w-full py-2.5 rounded-xl text-xs mt-2"

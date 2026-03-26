@@ -1,12 +1,24 @@
+import { useState, useEffect } from "react";
 import Icon from "@/components/ui/icon";
 import TopBar from "@/components/game/TopBar";
 import { LEADERBOARD, CHARACTERS } from "@/data/gameData";
+import { api, LeaderEntry } from "@/lib/api";
 
 interface LeaderboardProps {
   onNavigate: (screen: string) => void;
+  playerId?: string;
 }
 
-const Leaderboard = ({ onNavigate }: LeaderboardProps) => {
+const Leaderboard = ({ onNavigate, playerId }: LeaderboardProps) => {
+  const [realLeaders, setRealLeaders] = useState<LeaderEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.getLeaderboard(playerId).then(res => {
+      if (res.leaders && res.leaders.length > 0) setRealLeaders(res.leaders);
+    }).finally(() => setLoading(false));
+  }, [playerId]);
+
   const getCharEmoji = (name: string) => {
     const c = CHARACTERS.find(c => c.name === name);
     return c ? c.emoji : "⚔️";
@@ -28,7 +40,9 @@ const Leaderboard = ({ onNavigate }: LeaderboardProps) => {
         {/* Заголовок */}
         <div className="text-center mb-6 animate-fade-scale-in">
           <h1 className="font-orbitron font-black text-2xl md:text-3xl tracking-wider text-white">ТАБЛИЦА ЛИДЕРОВ</h1>
-          <p className="font-exo text-muted-foreground text-sm mt-1">Сезон 7 · Обновляется каждые 24 часа</p>
+          <p className="font-exo text-muted-foreground text-sm mt-1">
+            {loading ? "Загружаем..." : realLeaders.length > 0 ? `${realLeaders.length} реальных игроков` : "Сезон 7 · Демо-данные"}
+          </p>
         </div>
 
         {/* Топ-3 пьедестал */}
@@ -75,7 +89,10 @@ const Leaderboard = ({ onNavigate }: LeaderboardProps) => {
 
         {/* Полный список */}
         <div className="space-y-2 animate-slide-in-bottom delay-300">
-          {LEADERBOARD.map((player, i) => {
+          {(realLeaders.length > 0 ? realLeaders.map((p, i) => ({
+            rank: p.rank, name: p.name, level: p.level, wins: p.wins, winrate: p.winrate,
+            character: "⚔️", trophies: p.trophies, country: "🌍", isMe: p.is_me,
+          })) : LEADERBOARD).map((player, i) => {
             const rs = rankStyle(player.rank);
             return (
               <div key={player.rank}
@@ -93,10 +110,10 @@ const Leaderboard = ({ onNavigate }: LeaderboardProps) => {
                   </span>
                 </div>
 
-                {/* Персонаж-аватар */}
+                {/* Аватар */}
                 <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl flex-shrink-0"
                   style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}>
-                  {getCharEmoji(player.character)}
+                  {typeof player.character === "string" && player.character.length <= 2 ? player.character : getCharEmoji(player.character)}
                 </div>
 
                 {/* Инфо */}
